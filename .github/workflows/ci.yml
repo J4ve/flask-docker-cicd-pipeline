@@ -40,3 +40,21 @@ jobs:
       # Run the test suite — pipeline fails if any test fails
       - name: Run tests
         run: pytest -v
+
+  # Second job — only runs if "build" (tests) succeeds
+  docker:
+    runs-on: ubuntu-latest
+    # Wait for the test job to finish before starting this one
+    needs: build
+
+    steps:
+      # Need the source code on the runner to build the image
+      - uses: actions/checkout@v4
+
+      # Configure Docker Buildx for faster, more reliable builds
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Build the Docker image from the Dockerfile in the repo root
+      - name: Build Docker image
+        run: docker build -t se2-finallt:${{ github.sha }} .
