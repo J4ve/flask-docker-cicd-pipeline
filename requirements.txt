@@ -1,0 +1,4 @@
+# Web framework
+flask==3.0.0
+# Test runner
+pytest==8.0.0
