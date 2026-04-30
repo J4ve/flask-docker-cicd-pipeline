@@ -10,8 +10,8 @@ def test_hello():
     assert response.data == b"Hello, World!"
 
 
-# Intentionally broken test — used to demonstrate CI pipeline failure
-def test_broken():
-    client = app.test_client()
-    response = client.get("/")
-    assert response.data == b"Goodbye, World!"
+# # Intentionally broken test — used to demonstrate CI pipeline failure
+# def test_broken():
+#     client = app.test_client()
+#     response = client.get("/")
+#     assert response.data == b"Goodbye, World!"
