@@ -58,3 +58,35 @@ jobs:
       # Build the Docker image from the Dockerfile in the repo root
       - name: Build Docker image
         run: docker build -t se2-finallt:${{ github.sha }} .
+
+  # Third job — deploy to remote server only after image builds successfully
+  deploy:
+    runs-on: ubuntu-latest
+    # Only deploy after the docker job (which already needs build) succeeds
+    needs: docker
+    # Only deploy on pushes to main, not on pull requests
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      # SSH into the server and run the deploy commands
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          # Server details pulled from repo secrets
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          # Commands to run on the remote server
+          script: |
+            # Clone repo on first run, otherwise pull latest changes
+            if [ ! -d ~/se2-finalLT ]; then
+              git clone https://github.com/${{ github.repository }}.git ~/se2-finalLT
+            fi
+            cd ~/se2-finalLT
+            git pull origin main
+            # Rebuild image with latest code
+            docker build -t se2-finallt:latest .
+            # Stop and remove the old container if it exists, ignore errors if not
+            docker rm -f se2-finallt || true
+            # Start the new container, mapping port 80 on the host to 5000 in the container
+            docker run -d --name se2-finallt -p 80:5000 --restart unless-stopped se2-finallt:latest
